@@ -15,7 +15,6 @@ void enqueue(struct queue_t * q, struct pcb_t * proc) {
 			q->proc[q->size]=(struct pcb_t *) malloc(sizeof(struct pcb_t));
 		}
 		*(q->proc[q->size])=*proc;
-		q->proc[q->size]=proc;
 		q->size ++;
 	}
 }
@@ -24,7 +23,8 @@ struct pcb_t * dequeue(struct queue_t * q) {
 	/* TODO: return a pcb whose prioprity is the highest
 	 * in the queue [q] and remember to remove it from q
 	 * */
-	unsigned int highest_priority = -1;
+	if(q->size == 0) return NULL;
+	unsigned int highest_priority = q->proc[0]->priority;
 	int highest_priority_index=0;
 	for (int i = 0; i < q->size; ++i)
 	{
@@ -41,24 +41,7 @@ struct pcb_t * dequeue(struct queue_t * q) {
 	{
 		*(q->proc[i]) = *(q->proc [i+1]);
 	}
-	q->proc[q->size]=NULL;
+	//q->proc[q->size]=NULL;
 	return pcb_highest_priority;
-	unsigned int highest_prioprity = -1;
-	int highest_prioprity_index=0;
-	for (int i = 0; i < q->size; ++i)
-	{
-		unsigned int prioprity_i=q->proc[i]->prioprity;
-		if(prioprity_i > highest_prioprity){
-			highest_prioprity=prioprity_i;
-			highest_prioprity_index= i;
-		}
-	}
-	struct pcb_t * pcb_highest_prioprity = q->proc[highest_prioprity_index];
-	q->size --;
-	for (int i = highest_prioprity_index; i < q->size; ++i)
-	{
-		q->proc[i] = q->proc [i+1];
-	}
-	return pcb_highest_prioprity;
 }
 

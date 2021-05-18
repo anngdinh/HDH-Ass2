@@ -2,6 +2,7 @@
 #include "queue.h"
 #include "sched.h"
 #include <pthread.h>
+#include <stdlib.h>
 
 static struct queue_t ready_queue;
 static struct queue_t run_queue;
@@ -18,18 +19,22 @@ void init_scheduler(void) {
 }
 
 struct pcb_t * get_proc(void) {
+	pthread_mutex_lock(&queue_lock);
 	struct pcb_t * proc = NULL;
 	/*TODO: get a process from [ready_queue]. If ready queue
 	 * is empty, push all processes in [run_queue] back to
 	 * [ready_queue] and return the highest priority one.
 	 * Remember to use lock to protect the queue.
 	 * */
-	pthread_mutex_lock(&queue_lock);
+	
 	// If ready_queue empty, push run_queue
 	if(ready_queue.size == 0){
 		for (int i = 0; i < run_queue.size; ++i)
 		{
-			ready_queue.proc[i]=run_queue.proc[i];
+			if(ready_queue.proc[i] == NULL){
+				ready_queue.proc[i]= (struct pcb_t *) malloc(sizeof(struct pcb_t));
+			}
+			*(ready_queue.proc[i])=*(run_queue.proc[i]);
 		}
 		ready_queue.size=run_queue.size;
 		run_queue.size=0;

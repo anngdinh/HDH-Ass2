@@ -133,8 +133,7 @@ int main(int argc, char * argv[]) {
 	read_config(path);
 
 	pthread_t * cpu = (pthread_t*)malloc(num_cpus * sizeof(pthread_t));
-	struct cpu_args * args =
-		(struct cpu_args*)malloc(sizeof(struct cpu_args) * num_cpus);
+	struct cpu_args * args = (struct cpu_args*)malloc(sizeof(struct cpu_args) * num_cpus);
 	pthread_t ld;
 	
 	/* Init timer */
