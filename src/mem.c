@@ -137,6 +137,7 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
 		 * 	  valid. */
 		int pages_index=0;
 		int * mem_next;
+		addr_t first_lv = get_first_lv(ret_mem);
 		for(int i = 0 ; i< NUM_PAGES;i++){
 			if(_mem_stat[i].proc == 0){
 				/*Update _mem_stat of emty pages*/
@@ -164,13 +165,15 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
 
 				if(*page_size == 32){
 					(*seg_size)++;
-					proc->seg_table->table[(*seg_size)-1].v_index=(*seg_size)-1;
+					proc->seg_table->table[(*seg_size)-1].v_index=first_lv;
 					struct page_table_t * new_page_table = proc->seg_table->table[*seg_size-1].pages;
 					new_page_table->size++;
 					new_page_table->table[0].v_index=(addr_t)0;
 					new_page_table->table[0].p_index=(addr_t)i;
 				}else{
 					(*page_size)++;
+					if((*page_size) == 32)
+						first_lv++;
 					struct page_table_t * old_page_table = proc->seg_table->table[*seg_size-1].pages;
 					old_page_table->table[*page_size-1].p_index=(addr_t)i;
 					old_page_table->table[*page_size-1].v_index=(addr_t)((*page_size)-1);
@@ -194,7 +197,21 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 	pthread_mutex_unlock(&mem_lock);
 	addr_t physical_addr;
 	translate(address, &physical_addr, proc);
-	int mem_index= physical_addr
+	
+	int mem_index= physical_addr >> OFFSET_LEN ;
+	int num_pages=0;
+	do{
+		num_pages++;
+		_mem_stat[mem_index].pid=0;
+		mem_index=_mem_stat[mem_index].next;
+	}while(mem_index != -1)
+	int *seg_size=&(proc->seg_table->size);
+
+	for(int i =0 ;i<num_pages;i++){
+
+	}
+
+
 	pthread_mutex_lock(&mem_lock);
 	return 0;
 }
