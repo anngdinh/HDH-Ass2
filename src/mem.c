@@ -138,14 +138,18 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
 		int pages_index=0;
 		for(int i = 0 ; i< NUM_PAGES;i++){
 			if(_mem_stat[i].proc == 0){
-				_mem_stat[i].proc == proc->pid;
-				_mem_stat[i].index == pages_index;
-
+				_mem_stat[i].proc = proc->pid;
+				_mem_stat[i].index = pages_index;
 				pages_index++;
-				if(pages_index == num_pages) break;
+				if(pages_index == num_pages) {
+					_mem_stat[i].next=-1;
+					break;
+				}
+				else{
+					_mem_stat[i].next=pages_index;
+				}
 			}
 		}
-		for()
 	}
 	pthread_mutex_unlock(&mem_lock);
 	return ret_mem;
