@@ -166,6 +166,7 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
 				if(*page_size == 32){
 					(*seg_size)++;
 					proc->seg_table->table[(*seg_size)-1].v_index=first_lv;
+					proc->seg_table->table[*seg_size-1].pages = (struct page_table_t *) malloc(sizeof(struct page_table_t));
 					struct page_table_t * new_page_table = proc->seg_table->table[*seg_size-1].pages;
 					new_page_table->size++;
 					new_page_table->table[0].v_index=(addr_t)0;
@@ -195,19 +196,49 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 	 * 	- Remember to use lock to protect the memory from other
 	 * 	  processes.  */
 	pthread_mutex_unlock(&mem_lock);
-	addr_t physical_addr;
-	translate(address, &physical_addr, proc);
-	
-	int mem_index= physical_addr >> OFFSET_LEN ;
+	addr_t first_lv=get_first_lv(address);
+	addr_t second_lv=get_second_lv(address);
+	int mem_index;
 	int num_pages=0;
+	int *seg_size=&(proc->seg_table->size);
+	int seg_index;
+	int page_index;
+	for(seg_index = 0 ; seg_index<(*seg_size) ; seg_index++){
+		if(proc->seg_table->table[seg_index].v_index == first_lv){
+			int page_size=proc->seg_table->table[seg_index].pages->size;
+			for(page_index = 0;page_index<page_size;page_index++){
+				addr_t page_v_index=proc->seg_table->table[seg_index].pages->table[page_index].v_index;
+				if(page_v_index == second_lv){
+					mem_index=proc->seg_table->table[seg_index].pages->table[page_index].p_index;
+					break;
+				}
+			}
+			return 0;
+		}
+	}
 	do{
 		num_pages++;
 		_mem_stat[mem_index].pid=0;
 		mem_index=_mem_stat[mem_index].next;
-	}while(mem_index != -1)
-	int *seg_size=&(proc->seg_table->size);
-
+	}while(mem_index != -1);
+	int * page_size=&(proc->seg_table->table[seg_index].pages->size);
 	for(int i =0 ;i<num_pages;i++){
+		(*page_size)--;
+		if((*page_size) == 0){
+			free(proc->seg_table->table[seg_index].pages);
+			(*seg_size)--;
+			if(seg_index != (*seg_size)){
+				for(int j =seg_index; j<(*seg_size);j++){
+					proc->seg_table->table[j]=proc->seg_table->table[j+1];
+				}
+				page_size=&(proc->seg_table->table[seg_index].pages->size);
+			}
+		}else{
+			for(int j=page_index;j<(*page_size);j++){
+				proc->seg_table->table[seg_index].pages->table[j]=proc->seg_table->table[seg_index].pages->table[j+1];
+			}
+		}
+
 
 	}
 
