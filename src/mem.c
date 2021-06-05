@@ -205,41 +205,47 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 	 * 	- Remember to use lock to protect the memory from other
 	 * 	  processes.  */
 	pthread_mutex_lock(&mem_lock);
+
 	addr_t first_lv=get_first_lv(address);
 	addr_t second_lv=get_second_lv(address);
+	addr_t physical_addr;
 	int mem_index;
 	int num_pages=0;
-	int *seg_size=&(proc->seg_table->size);
 	int seg_index;
 	int page_index;
-	int recheck=1;
-	for(seg_index = 0 ; seg_index<(*seg_size) ; seg_index++){
-		if(proc->seg_table->table[seg_index].v_index == first_lv){
-			int page_size=proc->seg_table->table[seg_index].pages->size;
-			for(page_index = 0;page_index<page_size;page_index++){
-				addr_t page_v_index=proc->seg_table->table[seg_index].pages->table[page_index].v_index;
-				if(page_v_index == second_lv){
-					mem_index=(int)proc->seg_table->table[seg_index].pages->table[page_index].p_index;
-					recheck=0;
-					break;
-				}
-			}
-			if(recheck){
-				pthread_mutex_unlock(&mem_lock);
-				return 1;
-			}
-			else 
-				break;
-
-		}
+	struct page_table_t *page_table = get_page_table(first_lv,proc->seg_table);
+	if(translate(address,&physical_addr,proc) && page_table != NULL){
+		mem_index = physical_addr >> OFFSET_LEN;
+	}else {
+		pthread_mutex_unlock(&mem_lock);
+		return 1;
 	}
+
 	do{
 		num_pages++;
 		_mem_stat[mem_index].proc=0;
 		mem_index=_mem_stat[mem_index].next;
 	}while(mem_index != -1);
-	int * page_size=&(proc->seg_table->table[seg_index].pages->size);
-	for(int i =0 ;i<num_pages;i++){
+
+	for(int i =0 ; i< proc->seg_table->size; i++){
+		if(proc->seg_table->table[i].v_index == first_lv){
+			seg_index = i ;
+			for(int j = 0;j < proc->seg_table->table[i].pages->size; j++){
+				if(proc->seg_table->table[i].pages->table[j].v_index == second_lv){
+					page_index = j;
+				}
+				break;
+			}
+			break;
+
+		}
+	}
+	int *seg_size = &(roc->seg_table->size);
+	int *page_size = &(proc->seg_table->table[seg_index].pages->size);
+	for(int i = 0 ; i < num_pages ;i++){
+		if(seg_index < (*seg_size) - 1){
+			
+		}
 		(*page_size)--;
 		if((*page_size) == 0){
 			free(proc->seg_table->table[seg_index].pages);
@@ -261,10 +267,34 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 				proc->seg_table->table[seg_index].pages->table[j]=proc->seg_table->table[seg_index].pages->table[j+1];
 			}
 		}
-
-
 	}
 
+	/*int *seg_size = &(roc->seg_table->size);
+	int *page_size = &(proc->seg_table->table[seg_index].pages->size);
+	for(int i = 0 ; i < num_pages ;i++){
+		(*page_size)--;
+		if((*page_size) == 0){
+			free(proc->seg_table->table[seg_index].pages);
+			(*seg_size)--;
+			if(seg_index != (*seg_size)){
+				for(int j =seg_index; j<(*seg_size);j++){
+					proc->seg_table->table[j]=proc->seg_table->table[j+1];
+				}
+				page_size=&(proc->seg_table->table[seg_index].pages->size);
+			}
+			page_index=0;
+		}else if((*page_size) == page_index){
+			seg_index++;
+			page_index=0;
+			page_size=&(proc->seg_table->table[seg_index].pages->size);
+		}
+		else{
+			for(int j=page_index;j<(*page_size);j++){
+				proc->seg_table->table[seg_index].pages->table[j]=proc->seg_table->table[seg_index].pages->table[j+1];
+			}
+		}
+	}
+*/
 
 	pthread_mutex_unlock(&mem_lock);
 	return 0;
