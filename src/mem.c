@@ -213,8 +213,7 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 	int num_pages=0;
 	int seg_index;
 	int page_index;
-	struct page_table_t *page_table = get_page_table(first_lv,proc->seg_table);
-	if(translate(address,&physical_addr,proc) && page_table != NULL){
+	if(translate(address,&physical_addr,proc) ){
 		mem_index = physical_addr >> OFFSET_LEN;
 	}else {
 		pthread_mutex_unlock(&mem_lock);
