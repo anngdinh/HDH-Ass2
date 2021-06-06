@@ -90,7 +90,7 @@ static int translate(
 			 * to [p_index] field of page_table->table[i] to 
 			 * produce the correct physical address and save it to
 			 * [*physical_addr]  */
-			*physical_addr=(uint32_t)((page_table->table[i].p_index)*(uint32_t)1024+offset);
+			*physical_addr=(page_table->table[i].p_index)*PAGE_SIZE+offset;
 			return 1;
 		}
 	}
@@ -158,7 +158,7 @@ addr_t alloc_mem(uint32_t size, struct pcb_t * proc) {
 				if(*page_size == 32){
 					(*seg_size)++;
 					proc->seg_table->table[(*seg_size)-1].v_index=first_lv;
-					proc->seg_table->table[*seg_size-1].pages = (struct page_table_t *) malloc(sizeof(struct page_table_t));
+					proc->seg_table->table[(*seg_size)-1].pages = (struct page_table_t *) malloc(sizeof(struct page_table_t));
 					struct page_table_t * new_page_table = proc->seg_table->table[*seg_size-1].pages;
 					new_page_table->size++;
 					new_page_table->table[0].v_index=second_lv;
@@ -213,8 +213,8 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 	int num_pages=0;
 	int seg_index;
 	int page_index;
-	struct page_table_t *page_table = get_page_table(first_lv,proc->seg_table);
-	if(translate(address,&physical_addr,proc) && page_table != NULL){
+	//struct page_table_t *page_table = get_page_table(first_lv,proc->seg_table);
+	if(translate(address,&physical_addr,proc) ){
 		mem_index = physical_addr >> OFFSET_LEN;
 	}else {
 		pthread_mutex_unlock(&mem_lock);
@@ -233,15 +233,14 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 			for(int j = 0;j < proc->seg_table->table[i].pages->size; j++){
 				if(proc->seg_table->table[i].pages->table[j].v_index == second_lv){
 					page_index = j;
+					break;
 				}
-				break;
 			}
 			break;
 
 		}
 	}
-	int *seg_size = &(roc->seg_table->size);
-	int *page_size = &(proc->seg_table->table[seg_index].pages->size);
+	int *seg_size = &(proc->seg_table->size);
 	for(int i = 0 ; i < num_pages ;i++){
 		for(int m = seg_index;m < (*seg_size);m++){
 			int *page_size = &(proc->seg_table->table[m].pages->size);
@@ -253,7 +252,7 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 			for(int n = page_idx;n<(*page_size);n++){
 				if(n<(*page_size)-1){
 					proc->seg_table->table[m].pages->table[n]=proc->seg_table->table[m].pages->table[n+1];
-				}else if( seg_index<(*seg_size)-1){
+				}else if( m < (*seg_size)-1){
 					proc->seg_table->table[m].pages->table[n]=proc->seg_table->table[m+1].pages->table[0];
 				}
 			}
@@ -266,6 +265,7 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 			}
 		}
 	}
+
 
 	/*int *seg_size = &(roc->seg_table->size);
 	int *page_size = &(proc->seg_table->table[seg_index].pages->size);
