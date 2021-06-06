@@ -34,14 +34,14 @@ struct pcb_t * dequeue(struct queue_t * q) {
 			highest_priority_index= i;
 		}
 	}
-	struct pcb_t * pcb_highest_priority = (struct pcb_t *)malloc(sizeof(struct pcb_t));
-	*pcb_highest_priority= *(q->proc[highest_priority_index]);
+	struct pcb_t * pcb_highest_priority = NULL;
+	pcb_highest_priority= (q->proc[highest_priority_index]);
 	q->size --;
-	for (int i = highest_priority_index; i < q->size; ++i)
+	for (int i = highest_priority_index; i < MAX_QUEUE_SIZE - 1; i++)
 	{
-		*(q->proc[i]) = *(q->proc [i+1]);
+		(q->proc[i]) = (q->proc [i+1]);
 	}
-	//q->proc[q->size]=NULL;
+	q->proc[MAX_QUEUE_SIZE - 1]=NULL;
 	return pcb_highest_priority;
 }
 
