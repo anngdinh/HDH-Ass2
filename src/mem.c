@@ -267,33 +267,6 @@ int free_mem(addr_t address, struct pcb_t * proc) {
 	}
 
 
-	/*int *seg_size = &(roc->seg_table->size);
-	int *page_size = &(proc->seg_table->table[seg_index].pages->size);
-	for(int i = 0 ; i < num_pages ;i++){
-		(*page_size)--;
-		if((*page_size) == 0){
-			free(proc->seg_table->table[seg_index].pages);
-			(*seg_size)--;
-			if(seg_index != (*seg_size)){
-				for(int j =seg_index; j<(*seg_size);j++){
-					proc->seg_table->table[j]=proc->seg_table->table[j+1];
-				}
-				page_size=&(proc->seg_table->table[seg_index].pages->size);
-			}
-			page_index=0;
-		}else if((*page_size) == page_index){
-			seg_index++;
-			page_index=0;
-			page_size=&(proc->seg_table->table[seg_index].pages->size);
-		}
-		else{
-			for(int j=page_index;j<(*page_size);j++){
-				proc->seg_table->table[seg_index].pages->table[j]=proc->seg_table->table[seg_index].pages->table[j+1];
-			}
-		}
-	}
-*/
-
 	pthread_mutex_unlock(&mem_lock);
 	return 0;
 }
