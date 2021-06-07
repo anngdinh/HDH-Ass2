@@ -1,4 +1,3 @@
-
 #include "queue.h"
 #include "sched.h"
 #include <pthread.h>
@@ -28,13 +27,12 @@ struct pcb_t * get_proc(void) {
 	 * */
 	
 	// If ready_queue empty, push run_queue
-	if(ready_queue.size == 0){
-		for (int i = 0; i < run_queue.size; ++i)
+	if(ready_queue.size == 0)
+	{
+		for (int i = 0; i < MAX_QUEUE_SIZE; ++i)
 		{
-			if(ready_queue.proc[i] == NULL){
-				ready_queue.proc[i]= (struct pcb_t *) malloc(sizeof(struct pcb_t));
-			}
-			*(ready_queue.proc[i])=*(run_queue.proc[i]);
+			ready_queue.proc[i] = (run_queue.proc[i]);
+			run_queue.proc[i] = NULL;
 		}
 		ready_queue.size=run_queue.size;
 		run_queue.size=0;
@@ -56,5 +54,3 @@ void add_proc(struct pcb_t * proc) {
 	enqueue(&ready_queue, proc);
 	pthread_mutex_unlock(&queue_lock);	
 }
-
-
