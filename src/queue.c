@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "queue.h"
+#include <string.h>
 
 int empty(struct queue_t * q) {
 	return (q->size == 0);
@@ -8,13 +9,15 @@ int empty(struct queue_t * q) {
 
 void enqueue(struct queue_t * q, struct pcb_t * proc) {
 	/* TODO: put a new process to queue [q] */	
-	if(q->size >= 10)
+	if(q->size >= MAX_QUEUE_SIZE)
 		return ;
 	else{
-		if(q->proc[q->size] == NULL){
-			q->proc[q->size]=(struct pcb_t *) malloc(sizeof(struct pcb_t));
-		}
-		*(q->proc[q->size])=*proc;
+		// if(q->proc[q->size] == NULL){
+		// 	q->proc[q->size]=(struct pcb_t *) malloc(sizeof(struct pcb_t));
+		// }
+		// // *(q->proc[q->size]) = *proc;
+		// memcpy((q->proc[q->size]), proc, sizeof(struct pcb_t));
+		q->proc[q->size] = proc;
 		q->size ++;
 	}
 }
@@ -34,14 +37,13 @@ struct pcb_t * dequeue(struct queue_t * q) {
 			highest_priority_index= i;
 		}
 	}
-	struct pcb_t * pcb_highest_priority = (struct pcb_t *)malloc(sizeof(struct pcb_t));
-	*pcb_highest_priority= *(q->proc[highest_priority_index]);
+	struct pcb_t * pcb_highest_priority = NULL;
+	pcb_highest_priority= (q->proc[highest_priority_index]);
 	q->size --;
-	for (int i = highest_priority_index; i < q->size; ++i)
+	for (int i = highest_priority_index; i < MAX_QUEUE_SIZE - 1; i++)
 	{
-		*(q->proc[i]) = *(q->proc [i+1]);
+		(q->proc[i]) = (q->proc [i+1]);
 	}
-	//q->proc[q->size]=NULL;
+	q->proc[MAX_QUEUE_SIZE - 1]=NULL;
 	return pcb_highest_priority;
 }
-
